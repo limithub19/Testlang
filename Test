@@ -1,73 +1,113 @@
 local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
-local function createLabel(model, isPet)
-	local propertyName = isPet and "Mutation" or "Seed"
-	local labelSource = model:FindFirstChild(propertyName)
-	local owner = model:FindFirstChild("Owner")
-	local attachment = model:FindFirstChild("Attachment")
+-- 📦 UI Parent
+local screenGui = Instance.new("ScreenGui", game.CoreGui)
+screenGui.Name = "ZenLoaderGUI"
+screenGui.ResetOnSpawn = false
 
-	if not (labelSource and attachment and owner and owner.Value) then return end
+-- 🪟 Main Frame
+local Frame = Instance.new("Frame", screenGui)
+Frame.Size = UDim2.new(0, 360, 0, 270)
+Frame.Position = UDim2.new(0.5, -180, 0.5, -135)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
+Frame.Visible = true
 
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= owner.Value then continue end
+local UICorner = Instance.new("UICorner", Frame)
+UICorner.CornerRadius = UDim.new(0, 10)
 
-		local gui = Instance.new("BillboardGui")
-		gui.Name = "LabelGui"
-		gui.Adornee = attachment
-		gui.Size = UDim2.new(0, 250, 0, 60)
-		gui.StudsOffset = Vector3.new(0, 2.5, 0)
-		gui.AlwaysOnTop = true
-		gui.Parent = model
+-- 🌱 Title
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.Text = "🌱 Zen Garden Utility 🌱"
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
 
-		local icon = Instance.new("ImageLabel")
-		icon.Size = UDim2.new(0, 30, 0, 30)
-		icon.Position = UDim2.new(0, 5, 0.5, -15)
-		icon.BackgroundTransparency = 1
-		icon.Image = isPet and "rbxassetid://16732405444" or "rbxassetid://16732407395" -- your own icons!
-		icon.Parent = gui
+-- 🎲 Roll Button
+local RollButton = Instance.new("TextButton", Frame)
+RollButton.Text = "🎲 Roll Seed"
+RollButton.Size = UDim2.new(0.9, 0, 0, 50)
+RollButton.Position = UDim2.new(0.05, 0, 0, 60)
+RollButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+RollButton.Font = Enum.Font.SourceSansBold
+RollButton.TextSize = 22
 
-		local text = Instance.new("TextLabel")
-		text.Size = UDim2.new(1, -40, 1, 0)
-		text.Position = UDim2.new(0, 40, 0, 0)
-		text.BackgroundTransparency = 1
-		text.TextColor3 = isPet and Color3.fromRGB(255, 128, 255) or Color3.fromRGB(128, 255, 128)
-		text.Font = Enum.Font.GothamBold
-		text.TextScaled = true
-		text.Text = labelSource.Value
-		text.Parent = gui
+-- 🧬 Mutate Button
+local MutateButton = Instance.new("TextButton", Frame)
+MutateButton.Text = "🧬 Mutate Pet"
+MutateButton.Size = UDim2.new(0.9, 0, 0, 50)
+MutateButton.Position = UDim2.new(0.05, 0, 0, 120)
+MutateButton.BackgroundColor3 = Color3.fromRGB(140, 0, 180)
+MutateButton.Font = Enum.Font.SourceSansBold
+MutateButton.TextSize = 22
 
-		-- Add animation (pulse)
-		local tweenService = game:GetService("TweenService")
-		local goal = { Size = UDim2.new(0, 250, 0, 70) }
-		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-		tweenService:Create(gui, tweenInfo, goal):Play()
+-- 📄 Output Label
+local OutputLabel = Instance.new("TextLabel", Frame)
+OutputLabel.Text = "🌼 Ready to mutate or roll!"
+OutputLabel.Size = UDim2.new(0.9, 0, 0, 60)
+OutputLabel.Position = UDim2.new(0.05, 0, 0, 190)
+OutputLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+OutputLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+OutputLabel.Font = Enum.Font.SourceSans
+OutputLabel.TextSize = 18
+OutputLabel.TextWrapped = true
 
-		-- Listen for value updates
-		labelSource:GetPropertyChangedSignal("Value"):Connect(function()
-			text.Text = labelSource.Value
-		end)
-	end
+-- ☰ Toggle Button (Always Visible)
+local ToggleButton = Instance.new("TextButton", screenGui)
+ToggleButton.Size = UDim2.new(0, 40, 0, 40)
+ToggleButton.Position = UDim2.new(0, 10, 1, -60)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleButton.Text = "☰"
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextSize = 24
+
+local toggleCorner = Instance.new("UICorner", ToggleButton)
+toggleCorner.CornerRadius = UDim.new(1, 0)
+
+-- 🌱 Seed + Mutation Tables
+local seeds = {
+    "Sunflower Seed", "Cactus Seed", "Magic Bean",
+    "Glowroot", "Frozen Fern", "Dark Petal"
+}
+
+local mutations = {
+    "Gold", "Rainbow", "Wet", "Shocked", "Chilled", "Frozen",
+    "Moonlit", "Bloodlit", "Celestial", "Zombified", "Disco",
+    "Plasma", "Twisted", "Voidtouched", "Pollinated",
+    "HoneyGlazed", "Heavenly", "Choc", "Meteoric", "Burnt",
+    "Cooked", "Molten", "Dawnbound", "Alienlike", "Galactic",
+    "Verdant", "Paradisal", "Sundried", "Windstruck", "Drenched",
+    "Wilt", "Wiltproof", "Aurora", "Fried", "Cloudtouched",
+    "Sandy", "Clay", "Ceramic", "Amber", "OldAmber",
+    "AncientAmber", "Tempestuous", "Friendbound", "Infected",
+    "Tranquil", "Chakra", "Foxfire Chakra", "Radioactive"
+}
+
+-- 🎲 Roll Seed Function
+local function rollSeed()
+	local s = seeds[math.random(#seeds)]
+	OutputLabel.Text = "🌱 You rolled: " .. s
 end
 
--- Initial setup for all models
-for _, obj in ipairs(workspace:GetChildren()) do
-	if obj:IsA("Model") then
-		if obj:FindFirstChild("Mutation") then
-			createLabel(obj, true)
-		elseif obj:FindFirstChild("Seed") then
-			createLabel(obj, false)
-		end
-	end
+-- 🧬 Mutate Pet Function
+local function mutatePet()
+	local m = mutations[math.random(#mutations)]
+	OutputLabel.Text = "🐾 Pet mutated with: " .. m
 end
 
--- Auto label for new pets/eggs
-workspace.ChildAdded:Connect(function(obj)
-	if not obj:IsA("Model") then return end
-	task.wait(0.2) -- slight delay for values to load
+-- Button Click Events
+RollButton.MouseButton1Click:Connect(rollSeed)
+MutateButton.MouseButton1Click:Connect(mutatePet)
 
-	if obj:FindFirstChild("Mutation") then
-		createLabel(obj, true)
-	elseif obj:FindFirstChild("Seed") then
-		createLabel(obj, false)
-	end
+-- 🔁 Toggle UI Visibility
+local isVisible = true
+
+ToggleButton.MouseButton1Click:Connect(function()
+	isVisible = not isVisible
+	Frame.Visible = isVisible
 end)
