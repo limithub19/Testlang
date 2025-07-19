@@ -1,0 +1,73 @@
+local Players = game:GetService("Players")
+
+local function createLabel(model, isPet)
+	local propertyName = isPet and "Mutation" or "Seed"
+	local labelSource = model:FindFirstChild(propertyName)
+	local owner = model:FindFirstChild("Owner")
+	local attachment = model:FindFirstChild("Attachment")
+
+	if not (labelSource and attachment and owner and owner.Value) then return end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= owner.Value then continue end
+
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "LabelGui"
+		gui.Adornee = attachment
+		gui.Size = UDim2.new(0, 250, 0, 60)
+		gui.StudsOffset = Vector3.new(0, 2.5, 0)
+		gui.AlwaysOnTop = true
+		gui.Parent = model
+
+		local icon = Instance.new("ImageLabel")
+		icon.Size = UDim2.new(0, 30, 0, 30)
+		icon.Position = UDim2.new(0, 5, 0.5, -15)
+		icon.BackgroundTransparency = 1
+		icon.Image = isPet and "rbxassetid://16732405444" or "rbxassetid://16732407395" -- your own icons!
+		icon.Parent = gui
+
+		local text = Instance.new("TextLabel")
+		text.Size = UDim2.new(1, -40, 1, 0)
+		text.Position = UDim2.new(0, 40, 0, 0)
+		text.BackgroundTransparency = 1
+		text.TextColor3 = isPet and Color3.fromRGB(255, 128, 255) or Color3.fromRGB(128, 255, 128)
+		text.Font = Enum.Font.GothamBold
+		text.TextScaled = true
+		text.Text = labelSource.Value
+		text.Parent = gui
+
+		-- Add animation (pulse)
+		local tweenService = game:GetService("TweenService")
+		local goal = { Size = UDim2.new(0, 250, 0, 70) }
+		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+		tweenService:Create(gui, tweenInfo, goal):Play()
+
+		-- Listen for value updates
+		labelSource:GetPropertyChangedSignal("Value"):Connect(function()
+			text.Text = labelSource.Value
+		end)
+	end
+end
+
+-- Initial setup for all models
+for _, obj in ipairs(workspace:GetChildren()) do
+	if obj:IsA("Model") then
+		if obj:FindFirstChild("Mutation") then
+			createLabel(obj, true)
+		elseif obj:FindFirstChild("Seed") then
+			createLabel(obj, false)
+		end
+	end
+end
+
+-- Auto label for new pets/eggs
+workspace.ChildAdded:Connect(function(obj)
+	if not obj:IsA("Model") then return end
+	task.wait(0.2) -- slight delay for values to load
+
+	if obj:FindFirstChild("Mutation") then
+		createLabel(obj, true)
+	elseif obj:FindFirstChild("Seed") then
+		createLabel(obj, false)
+	end
+end)
